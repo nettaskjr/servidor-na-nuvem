@@ -1,0 +1,34 @@
+# Segredos e credenciais (nunca enviar ao git)
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Estado do Terraform (pode conter dados sensíveis)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Diretórios e caches do Terraform
+.terraform/
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+.terraform.lock.hcl
+
+# Chaves privadas e certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*-private-key.json
+*credentials*.json
+
+# Plan files
+*.tfplan
+
+# Editor / sistema
+*.swp
+.DS_Store
