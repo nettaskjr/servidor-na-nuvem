@@ -51,13 +51,16 @@ hcl_escape() {
 }
 
 # Pede o caminho da chave pública SSH (comum a todas as clouds).
+# Repete a pergunta até que um arquivo válido seja informado.
 ask_ssh_key() {
   local chave
-  ask "Caminho da chave pública SSH" chave "${HOME}/.ssh/id_rsa.pub"
-  if [[ ! -f "$chave" ]]; then
+  while true; do
+    ask "Caminho da chave pública SSH" chave "${HOME}/.ssh/id_rsa.pub"
+    if [[ -f "$chave" ]]; then
+      break
+    fi
     erro "Chave pública não encontrada: $chave"
-    return 1
-  fi
+  done
   SSH_PUBLIC_KEY="$(<"$chave")"
 }
 
@@ -235,10 +238,12 @@ setup_oci() {
   ask "User OCID" USER_OCID
   ask "Fingerprint" FINGERPRINT
   ask "Caminho da chave privada (PEM)" PRIVKEY "${HOME}/.oci/oci_api_key.pem"
-  ask "Região" REGIAO "us-ashburn-1"
+  ask "Região" REGIAO "sa-saopaulo-1"
   ask "Compartment OCID" COMPARTMENT
-  ask "Shape da instância" SHAPE "VM.Standard.E2.1.Micro"
-  ask "Nome do servidor" NOME "servidor-basico"
+  ask "Shape da instância" SHAPE "VM.Standard.A1.Flex"
+  ask "OCPUs (0 = shape não-flexível)" OCPUS "2"
+  ask "Memória em GB (0 = shape não-flexível)" MEMORIA "12"
+  ask "Nome do servidor" NOME "servidor"
   ask_ssh_key
 
   if [[ ! -f "$PRIVKEY" ]]; then
@@ -255,6 +260,8 @@ oci_private_key_path = "$(hcl_escape "$PRIVKEY")"
 oci_region           = "$(hcl_escape "$REGIAO")"
 oci_compartment_ocid = "$(hcl_escape "$COMPARTMENT")"
 oci_shape            = "$(hcl_escape "$SHAPE")"
+oci_ocpus            = $(hcl_escape "$OCPUS")
+oci_memory_in_gbs    = $(hcl_escape "$MEMORIA")
 server_name          = "$(hcl_escape "$NOME")"
 ssh_public_key       = "$(hcl_escape "$SSH_PUBLIC_KEY")"
 EOF

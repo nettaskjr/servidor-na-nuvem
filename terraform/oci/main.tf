@@ -66,6 +66,14 @@ resource "oci_core_instance" "servidor" {
   shape               = var.oci_shape
   display_name        = var.server_name
 
+  dynamic "shape_config" {
+    for_each = var.oci_ocpus > 0 ? [1] : []
+    content {
+      ocpus         = var.oci_ocpus
+      memory_in_gbs = var.oci_memory_in_gbs
+    }
+  }
+
   source_details {
     source_type = "image"
     source_id   = data.oci_core_images.ubuntu.images[0].id

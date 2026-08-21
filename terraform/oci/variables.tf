@@ -36,6 +36,18 @@ variable "oci_shape" {
   default     = "VM.Standard.E2.1.Micro"
 }
 
+variable "oci_ocpus" {
+  description = "OCPUs (shapes flexíveis). Deixe 0 para shapes não-flexíveis"
+  type        = number
+  default     = 0
+}
+
+variable "oci_memory_in_gbs" {
+  description = "Memória em GB (shapes flexíveis). Deixe 0 para shapes não-flexíveis"
+  type        = number
+  default     = 0
+}
+
 variable "server_name" {
   description = "Nome do servidor"
   type        = string
