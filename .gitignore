@@ -28,6 +28,7 @@ override.tf.json
 
 # Plan files
 *.tfplan
+tfplan
 
 # Editor / sistema
 *.swp
