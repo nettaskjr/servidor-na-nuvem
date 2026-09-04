@@ -58,3 +58,23 @@ variable "ssh_public_key" {
   description = "Chave pública SSH para acesso"
   type        = string
 }
+
+# Opção para abrir portas arbitrárias na Security List do subnet
+# Habilite definindo `open_port_enable = true` em terraform.tfvars
+variable "open_port_enable" {
+  description = "Habilita abertura de portas customizadas na Security List do subnet"
+  type        = bool
+  default     = true
+}
+
+variable "open_port_numbers" {
+  description = "Vetor com números de portas a abrir quando `open_port_enable` for true"
+  type        = list(number)
+  default     = [8000]
+}
+
+variable "open_port_cidr" {
+  description = "CIDR fonte permitido para as portas abertas (ex: 0.0.0.0/0)"
+  type        = string
+  default     = "0.0.0.0/0"
+}
