@@ -70,7 +70,7 @@ variable "open_port_enable" {
 variable "open_port_numbers" {
   description = "Vetor com números de portas a abrir quando `open_port_enable` for true"
   type        = list(number)
-  default     = [8000]
+  default     = [22, 80, 443, 6001, 6002, 8000]
 }
 
 variable "open_port_cidr" {

@@ -136,5 +136,5 @@ output "public_ip" {
 
 output "ssh_command" {
   description = "Comando para acessar via SSH"
-  value       = "ssh -i ~/.ssh/id_rsa ubuntu@${oci_core_instance.servidor.public_ip}"
+  value       = "ssh ubuntu@${oci_core_instance.servidor.public_ip}"
 }

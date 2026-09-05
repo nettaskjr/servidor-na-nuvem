@@ -1,0 +1,52 @@
+#cloud-config
+
+# Configura o fuso horário e locale
+timezone: America/Sao_Paulo
+locale: en_US.UTF-8
+
+# Atualiza pacotes e sistema
+package_update: true
+package_upgrade: true 
+
+# Configuração e Ativação do NTP (Chrony)
+ntp:
+  enabled: true
+  ntp_client: chrony
+
+# Pacotes requiridos básicos
+packages:
+  - ca-certificates
+  - curl
+  - wget
+  - gnupg
+  - vim
+  - nano
+  - git
+  - htop
+  - iotop
+  - jq
+  - unzip
+  - tar
+  - rsync
+  - dnsutils
+  - apt-transport-https
+  - software-properties-common
+  - cockpit
+  - udisks2-lvm2
+  - cockpit-pcp
+  - netdata
+  - tree
+  - ncdu
+
+# Mantemos apenas o workaround do apt no bootcmd.
+bootcmd:
+  # Força o apt a usar IPv4 para evitar timeouts na rede da OCI
+  - echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+
+# Reinicia o sistema após todas as instalações:
+power_state:
+  mode: reboot
+  message: Reiniciando após finalizar as instalações
+  condition: True
+
+final_message: "O sistema OCI subiu com Docker e Cloudflared com sucesso ao final. $UPTIME"
