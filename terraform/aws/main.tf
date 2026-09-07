@@ -15,6 +15,14 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
+module "cloud_init" {
+  source = "../modules/cloud-init"
+
+  ssh_public_key = var.ssh_public_key
+  os_user        = "ubuntu"
+  cloud_name     = "AWS"
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
@@ -65,6 +73,7 @@ resource "aws_instance" "servidor" {
   instance_type          = var.instance_type
   key_name               = aws_key_pair.acesso.key_name
   vpc_security_group_ids = [aws_security_group.servidor.id]
+  user_data              = module.cloud_init.rendered
 
   tags = {
     Name = var.server_name

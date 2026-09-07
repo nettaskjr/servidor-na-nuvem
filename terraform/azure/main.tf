@@ -18,6 +18,14 @@ provider "azurerm" {
   client_secret   = var.azure_client_secret
 }
 
+module "cloud_init" {
+  source = "../modules/cloud-init"
+
+  ssh_public_key = var.ssh_public_key
+  os_user        = "azureuser"
+  cloud_name     = "Azure"
+}
+
 resource "azurerm_resource_group" "rg" {
   name     = "${var.server_name}-rg"
   location = var.azure_location
@@ -99,6 +107,8 @@ resource "azurerm_linux_virtual_machine" "servidor" {
   size                = var.azure_vm_size
 
   admin_username = "azureuser"
+
+  custom_data = base64encode(module.cloud_init.rendered)
 
   network_interface_ids = [
     azurerm_network_interface.nic.id

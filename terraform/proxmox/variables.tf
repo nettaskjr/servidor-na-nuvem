@@ -32,6 +32,12 @@ variable "proxmox_template_id" {
   default     = 9000
 }
 
+variable "proxmox_snippets_datastore" {
+  description = "Datastore com content-type 'Snippets' habilitado (ex.: local)"
+  type        = string
+  default     = "local"
+}
+
 variable "vm_name" {
   description = "Nome do servidor"
   type        = string

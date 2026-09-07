@@ -17,6 +17,14 @@ provider "oci" {
   region           = var.oci_region
 }
 
+module "cloud_init" {
+  source = "../modules/cloud-init"
+
+  ssh_public_key = var.ssh_public_key
+  os_user        = "ubuntu"
+  cloud_name     = "OCI"
+}
+
 data "oci_identity_availability_domains" "ads" {
   compartment_id = var.oci_compartment_ocid
 }
@@ -97,7 +105,7 @@ resource "oci_core_subnet" "subnet" {
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_virtual_network.vcn.default_route_table_id
   # Anexa a Security List criada acima quando `open_port_enable` = true
-  security_list_ids          = var.open_port_enable ? [oci_core_security_list.open_port[0].id] : []
+  security_list_ids = var.open_port_enable ? [oci_core_security_list.open_port[0].id] : []
 }
 
 resource "oci_core_instance" "servidor" {
@@ -126,6 +134,7 @@ resource "oci_core_instance" "servidor" {
 
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
+    user_data           = base64encode(module.cloud_init.rendered)
   }
 }
 

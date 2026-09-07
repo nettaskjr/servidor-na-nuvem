@@ -16,6 +16,14 @@ provider "google" {
   zone        = var.gcp_zone
 }
 
+module "cloud_init" {
+  source = "../modules/cloud-init"
+
+  ssh_public_key = var.ssh_public_key
+  os_user        = "ubuntu"
+  cloud_name     = "GCP"
+}
+
 resource "google_compute_network" "rede" {
   name                    = "${var.server_name}-vpc"
   auto_create_subnetworks = true
@@ -70,7 +78,8 @@ resource "google_compute_instance" "servidor" {
   }
 
   metadata = {
-    ssh-keys = "ubuntu:${var.ssh_public_key}"
+    ssh-keys  = "ubuntu:${var.ssh_public_key}"
+    user-data = module.cloud_init.rendered
   }
 }
 

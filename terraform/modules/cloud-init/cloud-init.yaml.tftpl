@@ -13,6 +13,14 @@ ntp:
   enabled: true
   ntp_client: chrony
 
+# Usuário padrão e chave SSH de acesso
+users:
+  - name: ${os_user}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
 # Pacotes requiridos básicos
 packages:
   - ca-certificates
@@ -40,7 +48,7 @@ packages:
 
 # Mantemos apenas o workaround do apt no bootcmd.
 bootcmd:
-  # Força o apt a usar IPv4 para evitar timeouts na rede da OCI
+  # Força o apt a usar IPv4 para evitar timeouts de rede
   - echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
 
 # Reinicia o sistema após todas as instalações:
@@ -49,4 +57,4 @@ power_state:
   message: Reiniciando após finalizar as instalações
   condition: True
 
-final_message: "O sistema OCI subiu com Docker e Cloudflared com sucesso ao final. $UPTIME"
+final_message: "O servidor ${cloud_name} subiu com sucesso ao final. $UPTIME"

@@ -15,6 +15,25 @@ provider "proxmox" {
   insecure  = true
 }
 
+module "cloud_init" {
+  source = "../modules/cloud-init"
+
+  ssh_public_key = var.ssh_public_key
+  os_user        = var.vm_user
+  cloud_name     = "Proxmox"
+}
+
+resource "proxmox_virtual_environment_file" "cloud_config" {
+  content_type = "snippets"
+  datastore_id = var.proxmox_snippets_datastore
+  node_name    = var.proxmox_node
+
+  source_raw {
+    data      = module.cloud_init.rendered
+    file_name = "cloud-init-${var.vm_name}.yaml"
+  }
+}
+
 resource "proxmox_virtual_environment_vm" "servidor" {
   name      = var.vm_name
   node_name = var.proxmox_node
@@ -39,10 +58,7 @@ resource "proxmox_virtual_environment_vm" "servidor" {
       }
     }
 
-    user_account {
-      username = var.vm_user
-      keys     = [var.ssh_public_key]
-    }
+    user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
   }
 }
 

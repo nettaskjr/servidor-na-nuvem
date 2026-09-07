@@ -129,6 +129,11 @@ servidor-na-nuvem/
 ├── .gitignore                 # Ignora segredos (terraform.tfvars, *.tfstate, chaves)
 ├── create-server.sh           # Menu + perguntas + geração do tfvars + execução
 └── terraform/
+    ├── modules/
+    │   └── cloud-init/        # Módulo compartilhado de cloud-init
+    │       ├── cloud-init.yaml.tftpl   # Template único usado por todas as clouds
+    │       ├── main.tf                # Renderiza o template + outputs (rendered/base64)
+    │       └── variables.tf           # ssh_public_key, os_user, cloud_name
     ├── aws/
     │   ├── main.tf            # Recursos (instância, key pair, security group)
     │   └── variables.tf       # Variáveis declaradas
