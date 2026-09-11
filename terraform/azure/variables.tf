@@ -34,6 +34,12 @@ variable "azure_vm_size" {
   default     = "Standard_B1s"
 }
 
+variable "azure_disk_size" {
+  description = "Tamanho do disco inicial em GB"
+  type        = number
+  default     = 50
+}
+
 variable "server_name" {
   description = "Nome do servidor"
   type        = string

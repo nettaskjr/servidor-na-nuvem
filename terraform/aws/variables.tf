@@ -16,16 +16,22 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "instance_type" {
+variable "aws_instance_type" {
   description = "Tipo da instância EC2"
   type        = string
   default     = "t3.micro"
 }
 
-variable "ami_id" {
+variable "aws_ami_id" {
   description = "ID da AMI (vazio = usa Ubuntu 22.04 LTS da região)"
   type        = string
   default     = ""
+}
+
+variable "aws_disk_size" {
+  description = "Tamanho do disco inicial em GB"
+  type        = number
+  default     = 50
 }
 
 variable "server_name" {

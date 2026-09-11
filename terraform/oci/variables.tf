@@ -48,6 +48,12 @@ variable "oci_memory_in_gbs" {
   default     = 0
 }
 
+variable "oci_disk_size" {
+  description = "Tamanho do disco inicial em GB"
+  type        = number
+  default     = 50
+}
+
 variable "server_name" {
   description = "Nome do servidor"
   type        = string
@@ -60,20 +66,20 @@ variable "ssh_public_key" {
 }
 
 # Opção para abrir portas arbitrárias na Security List do subnet
-# Habilite definindo `open_port_enable = true` em terraform.tfvars
-variable "open_port_enable" {
+# Habilite definindo `oci_open_port_enable = true` em terraform.tfvars
+variable "oci_open_port_enable" {
   description = "Habilita abertura de portas customizadas na Security List do subnet"
   type        = bool
   default     = true
 }
 
-variable "open_port_numbers" {
-  description = "Vetor com números de portas a abrir quando `open_port_enable` for true"
+variable "oci_open_port_numbers" {
+  description = "Vetor com números de portas a abrir quando `oci_open_port_enable` for true"
   type        = list(number)
-  default     = [22, 80, 443, 6001, 6002, 8000]
+  default     = [22]
 }
 
-variable "open_port_cidr" {
+variable "oci_open_port_cidr" {
   description = "CIDR fonte permitido para as portas abertas (ex: 0.0.0.0/0)"
   type        = string
   default     = "0.0.0.0/0"

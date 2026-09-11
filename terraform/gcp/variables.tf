@@ -27,6 +27,12 @@ variable "gcp_machine_type" {
   default     = "e2-micro"
 }
 
+variable "gcp_disk_size" {
+  description = "Tamanho do disco inicial em GB"
+  type        = number
+  default     = 50
+}
+
 variable "server_name" {
   description = "Nome do servidor"
   type        = string

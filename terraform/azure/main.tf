@@ -122,6 +122,7 @@ resource "azurerm_linux_virtual_machine" "servidor" {
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = var.azure_disk_size
   }
 
   source_image_reference {
@@ -140,4 +141,9 @@ output "public_ip" {
 output "ssh_command" {
   description = "Comando para acessar via SSH"
   value       = "ssh -i ~/.ssh/id_rsa azureuser@${azurerm_public_ip.pip.ip_address}"
+}
+
+output "cloud_init_log_command" {
+  description = "Comando para acompanhar a saída do cloud-init em tempo real"
+  value       = "sudo tail -f /var/log/cloud-init-output.log"
 }

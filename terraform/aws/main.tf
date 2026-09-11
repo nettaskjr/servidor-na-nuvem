@@ -69,11 +69,16 @@ resource "aws_security_group" "servidor" {
 }
 
 resource "aws_instance" "servidor" {
-  ami                    = var.ami_id != "" ? var.ami_id : data.aws_ami.ubuntu.id
-  instance_type          = var.instance_type
+  ami                    = var.aws_ami_id != "" ? var.aws_ami_id : data.aws_ami.ubuntu.id
+  instance_type          = var.aws_instance_type
   key_name               = aws_key_pair.acesso.key_name
   vpc_security_group_ids = [aws_security_group.servidor.id]
   user_data              = module.cloud_init.rendered
+
+  root_block_device {
+    volume_size = var.aws_disk_size
+    volume_type = "gp3"
+  }
 
   tags = {
     Name = var.server_name
@@ -88,4 +93,9 @@ output "public_ip" {
 output "ssh_command" {
   description = "Comando para acessar via SSH"
   value       = "ssh -i ~/.ssh/id_rsa ubuntu@${aws_instance.servidor.public_ip}"
+}
+
+output "cloud_init_log_command" {
+  description = "Comando para acompanhar a saída do cloud-init em tempo real"
+  value       = "sudo tail -f /var/log/cloud-init-output.log"
 }

@@ -19,7 +19,7 @@ module "cloud_init" {
   source = "../modules/cloud-init"
 
   ssh_public_key = var.ssh_public_key
-  os_user        = var.vm_user
+  os_user        = var.proxmox_vm_user
   cloud_name     = "Proxmox"
 }
 
@@ -30,12 +30,12 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
 
   source_raw {
     data      = module.cloud_init.rendered
-    file_name = "cloud-init-${var.vm_name}.yaml"
+    file_name = "cloud-init-${var.proxmox_vm_name}.yaml"
   }
 }
 
 resource "proxmox_virtual_environment_vm" "servidor" {
-  name      = var.vm_name
+  name      = var.proxmox_vm_name
   node_name = var.proxmox_node
   vm_id     = var.proxmox_vm_id
 

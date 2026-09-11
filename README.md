@@ -116,6 +116,7 @@ Ao final, o Terraform exibe o IP público e um comando pronto, por exemplo:
 ```
 public_ip = "54.123.45.67"
 ssh_command = "ssh -i ~/.ssh/id_rsa ubuntu@54.123.45.67"
+cloud_init_log_command = "tail -f /var/log/cloud-init-output.log"
 ```
 
 Basta copiar e executar o comando SSH.

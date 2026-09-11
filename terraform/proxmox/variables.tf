@@ -38,13 +38,13 @@ variable "proxmox_snippets_datastore" {
   default     = "local"
 }
 
-variable "vm_name" {
+variable "proxmox_vm_name" {
   description = "Nome do servidor"
   type        = string
   default     = "servidor-basico"
 }
 
-variable "vm_user" {
+variable "proxmox_vm_user" {
   description = "Usuário criado via cloud-init"
   type        = string
   default     = "ubuntu"

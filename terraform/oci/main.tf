@@ -59,21 +59,21 @@ resource "oci_core_internet_gateway" "igw" {
 
 # Security List opcional para abrir uma porta arbitrária no subnet.
 # Para habilitar, defina em `terraform/oci/terraform.tfvars`:
-#   open_port_enable = true
-#   open_port_number = 2222          # número da porta desejada
-#   open_port_cidr   = "1.2.3.4/32" # (opcional) CIDR de origem permitido
+#   oci_open_port_enable = true
+#   oci_open_port_number = 2222          # número da porta desejada
+#   oci_open_port_cidr   = "1.2.3.4/32" # (opcional) CIDR de origem permitido
 resource "oci_core_security_list" "open_port" {
-  count          = var.open_port_enable ? 1 : 0
+  count          = var.oci_open_port_enable ? 1 : 0
   compartment_id = var.oci_compartment_ocid
   vcn_id         = oci_core_virtual_network.vcn.id
   display_name   = "${var.server_name}-open-port"
 
   dynamic "ingress_security_rules" {
-    for_each = var.open_port_numbers
+    for_each = var.oci_open_port_numbers
     content {
       description = "Allow port ${ingress_security_rules.value}"
       protocol    = "6" # TCP
-      source      = var.open_port_cidr
+      source      = var.oci_open_port_cidr
       tcp_options {
         min = ingress_security_rules.value
         max = ingress_security_rules.value
@@ -104,8 +104,8 @@ resource "oci_core_subnet" "subnet" {
   display_name               = "${var.server_name}-subnet"
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_virtual_network.vcn.default_route_table_id
-  # Anexa a Security List criada acima quando `open_port_enable` = true
-  security_list_ids = var.open_port_enable ? [oci_core_security_list.open_port[0].id] : []
+  # Anexa a Security List criada acima quando `oci_open_port_enable` = true
+  security_list_ids = var.oci_open_port_enable ? [oci_core_security_list.open_port[0].id] : []
 }
 
 resource "oci_core_instance" "servidor" {
@@ -123,8 +123,9 @@ resource "oci_core_instance" "servidor" {
   }
 
   source_details {
-    source_type = "image"
-    source_id   = local.selected_ubuntu_image_id
+    source_type             = "image"
+    source_id               = local.selected_ubuntu_image_id
+    boot_volume_size_in_gbs = var.oci_disk_size
   }
 
   create_vnic_details {
@@ -146,4 +147,9 @@ output "public_ip" {
 output "ssh_command" {
   description = "Comando para acessar via SSH"
   value       = "ssh ubuntu@${oci_core_instance.servidor.public_ip}"
+}
+
+output "cloud_init_log_command" {
+  description = "Comando para acompanhar a saída do cloud-init em tempo real"
+  value       = "sudo tail -f /var/log/cloud-init-output.log"
 }
