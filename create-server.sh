@@ -136,20 +136,33 @@ setup_aws() {
   ask "Região" REGIAO "us-east-1"
   ask "Tipo de instância" TIPO "t3.micro"
   ask "Tamanho do disco inicial em GB" DISCO "50"
+  ask "Habilitar abertura de portas customizadas no Security Group (S/n)" ABRIR_PORTAS "S"
+  ask "Portas a abrir (separadas por vírgula)" PORTAS "22,80"
+  ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "ID da AMI (vazio = Ubuntu 22.04 LTS)" AMI ""
   ask "Nome do servidor" NOME "servidor-basico"
   ask_ssh_key
 
+  ABRIR_PORTAS_BOOL=false
+  if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
+    ABRIR_PORTAS_BOOL=true
+  fi
+  PORTAS_LIMPA="${PORTAS// /}"
+  PORTAS_HCL="[${PORTAS_LIMPA//,/, }]"
+
   cat > "${dir}/terraform.tfvars" <<EOF
 # Credenciais AWS (não versionar este arquivo)
-aws_access_key     = "$(hcl_escape "$AK")"
-aws_secret_key     = "$(hcl_escape "$SK")"
-aws_region         = "$(hcl_escape "$REGIAO")"
-aws_instance_type  = "$(hcl_escape "$TIPO")"
-aws_disk_size      = $(hcl_escape "$DISCO")
-aws_ami_id         = "$(hcl_escape "$AMI")"
-server_name        = "$(hcl_escape "$NOME")"
-ssh_public_key     = "$(hcl_escape "$SSH_PUBLIC_KEY")"
+aws_access_key        = "$(hcl_escape "$AK")"
+aws_secret_key        = "$(hcl_escape "$SK")"
+aws_region            = "$(hcl_escape "$REGIAO")"
+aws_instance_type     = "$(hcl_escape "$TIPO")"
+aws_disk_size         = $(hcl_escape "$DISCO")
+aws_ami_id            = "$(hcl_escape "$AMI")"
+aws_open_port_enable  = $ABRIR_PORTAS_BOOL
+aws_open_port_numbers = $PORTAS_HCL
+aws_open_port_cidr    = "$(hcl_escape "$PORTAS_CIDR")"
+server_name           = "$(hcl_escape "$NOME")"
+ssh_public_key        = "$(hcl_escape "$SSH_PUBLIC_KEY")"
 EOF
   ok "terraform.tfvars gerado em ${dir}"
   run_terraform aws
@@ -171,6 +184,9 @@ setup_gcp() {
   ask "Zona" ZONA "us-central1-a"
   ask "Tipo de máquina" TIPO "e2-micro"
   ask "Tamanho do disco inicial em GB" DISCO "50"
+  ask "Habilitar abertura de portas customizadas no firewall (S/n)" ABRIR_PORTAS "S"
+  ask "Portas a abrir (separadas por vírgula)" PORTAS "22,80"
+  ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "Nome do servidor" NOME "servidor-basico"
   ask_ssh_key
 
@@ -179,16 +195,26 @@ setup_gcp() {
     return 1
   fi
 
+  ABRIR_PORTAS_BOOL=false
+  if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
+    ABRIR_PORTAS_BOOL=true
+  fi
+  PORTAS_LIMPA="${PORTAS// /}"
+  PORTAS_HCL="[${PORTAS_LIMPA//,/, }]"
+
   cat > "${dir}/terraform.tfvars" <<EOF
 # Credenciais GCP (não versionar este arquivo)
-gcp_project_id       = "$(hcl_escape "$PROJETO")"
-gcp_credentials_file = "$(hcl_escape "$CRED")"
-gcp_region           = "$(hcl_escape "$REGIAO")"
-gcp_zone             = "$(hcl_escape "$ZONA")"
-gcp_machine_type     = "$(hcl_escape "$TIPO")"
-gcp_disk_size        = $(hcl_escape "$DISCO")
-server_name          = "$(hcl_escape "$NOME")"
-ssh_public_key       = "$(hcl_escape "$SSH_PUBLIC_KEY")"
+gcp_project_id        = "$(hcl_escape "$PROJETO")"
+gcp_credentials_file  = "$(hcl_escape "$CRED")"
+gcp_region            = "$(hcl_escape "$REGIAO")"
+gcp_zone              = "$(hcl_escape "$ZONA")"
+gcp_machine_type      = "$(hcl_escape "$TIPO")"
+gcp_disk_size         = $(hcl_escape "$DISCO")
+gcp_open_port_enable  = $ABRIR_PORTAS_BOOL
+gcp_open_port_numbers = $PORTAS_HCL
+gcp_open_port_cidr    = "$(hcl_escape "$PORTAS_CIDR")"
+server_name           = "$(hcl_escape "$NOME")"
+ssh_public_key        = "$(hcl_escape "$SSH_PUBLIC_KEY")"
 EOF
   ok "terraform.tfvars gerado em ${dir}"
   run_terraform gcp
@@ -211,20 +237,33 @@ setup_azure() {
   ask "Localização (location)" LOC "eastus"
   ask "Tamanho da VM" TAM "Standard_B1s"
   ask "Tamanho do disco inicial em GB" DISCO "50"
+  ask "Habilitar abertura de portas customizadas no Network Security Group (S/n)" ABRIR_PORTAS "S"
+  ask "Portas a abrir (separadas por vírgula)" PORTAS "22,80"
+  ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "Nome do servidor" NOME "servidor-basico"
   ask_ssh_key
 
+  ABRIR_PORTAS_BOOL=false
+  if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
+    ABRIR_PORTAS_BOOL=true
+  fi
+  PORTAS_LIMPA="${PORTAS// /}"
+  PORTAS_HCL="[${PORTAS_LIMPA//,/, }]"
+
   cat > "${dir}/terraform.tfvars" <<EOF
 # Credenciais Azure (não versionar este arquivo)
-azure_subscription_id = "$(hcl_escape "$SUB")"
-azure_tenant_id       = "$(hcl_escape "$TENANT")"
-azure_client_id       = "$(hcl_escape "$CLIENT")"
-azure_client_secret   = "$(hcl_escape "$SECRET")"
-azure_location        = "$(hcl_escape "$LOC")"
-azure_vm_size         = "$(hcl_escape "$TAM")"
-azure_disk_size       = $(hcl_escape "$DISCO")
-server_name           = "$(hcl_escape "$NOME")"
-ssh_public_key        = "$(hcl_escape "$SSH_PUBLIC_KEY")"
+azure_subscription_id   = "$(hcl_escape "$SUB")"
+azure_tenant_id         = "$(hcl_escape "$TENANT")"
+azure_client_id         = "$(hcl_escape "$CLIENT")"
+azure_client_secret     = "$(hcl_escape "$SECRET")"
+azure_location          = "$(hcl_escape "$LOC")"
+azure_vm_size           = "$(hcl_escape "$TAM")"
+azure_disk_size         = $(hcl_escape "$DISCO")
+azure_open_port_enable  = $ABRIR_PORTAS_BOOL
+azure_open_port_numbers = $PORTAS_HCL
+azure_open_port_cidr    = "$(hcl_escape "$PORTAS_CIDR")"
+server_name             = "$(hcl_escape "$NOME")"
+ssh_public_key          = "$(hcl_escape "$SSH_PUBLIC_KEY")"
 EOF
   ok "terraform.tfvars gerado em ${dir}"
   run_terraform azure
@@ -250,6 +289,9 @@ setup_oci() {
   ask "OCPUs (0 = shape não-flexível)" OCPUS "2"
   ask "Memória em GB (0 = shape não-flexível)" MEMORIA "12"
   ask "Tamanho do disco inicial em GB" DISCO "50"
+  ask "Habilitar abertura de portas customizadas na Security List (S/n)" ABRIR_PORTAS "S"
+  ask "Portas a abrir (separadas por vírgula)" PORTAS "22"
+  ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "Nome do servidor" NOME "servidor"
   ask_ssh_key
 
@@ -258,20 +300,30 @@ setup_oci() {
     return 1
   fi
 
+  ABRIR_PORTAS_BOOL=false
+  if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
+    ABRIR_PORTAS_BOOL=true
+  fi
+  PORTAS_LIMPA="${PORTAS// /}"
+  PORTAS_HCL="[${PORTAS_LIMPA//,/, }]"
+
   cat > "${dir}/terraform.tfvars" <<EOF
 # Credenciais OCI (não versionar este arquivo)
-oci_tenancy_ocid     = "$(hcl_escape "$TENANCY")"
-oci_user_ocid        = "$(hcl_escape "$USER_OCID")"
-oci_fingerprint      = "$(hcl_escape "$FINGERPRINT")"
-oci_private_key_path = "$(hcl_escape "$PRIVKEY")"
-oci_region           = "$(hcl_escape "$REGIAO")"
-oci_compartment_ocid = "$(hcl_escape "$COMPARTMENT")"
-oci_shape            = "$(hcl_escape "$SHAPE")"
-oci_ocpus            = $(hcl_escape "$OCPUS")
-oci_memory_in_gbs    = $(hcl_escape "$MEMORIA")
-oci_disk_size        = $(hcl_escape "$DISCO")
-server_name          = "$(hcl_escape "$NOME")"
-ssh_public_key       = "$(hcl_escape "$SSH_PUBLIC_KEY")"
+oci_tenancy_ocid      = "$(hcl_escape "$TENANCY")"
+oci_user_ocid         = "$(hcl_escape "$USER_OCID")"
+oci_fingerprint       = "$(hcl_escape "$FINGERPRINT")"
+oci_private_key_path  = "$(hcl_escape "$PRIVKEY")"
+oci_region            = "$(hcl_escape "$REGIAO")"
+oci_compartment_ocid  = "$(hcl_escape "$COMPARTMENT")"
+oci_shape             = "$(hcl_escape "$SHAPE")"
+oci_ocpus             = $(hcl_escape "$OCPUS")
+oci_memory_in_gbs     = $(hcl_escape "$MEMORIA")
+oci_disk_size         = $(hcl_escape "$DISCO")
+oci_open_port_enable  = $ABRIR_PORTAS_BOOL
+oci_open_port_numbers = $PORTAS_HCL
+oci_open_port_cidr    = "$(hcl_escape "$PORTAS_CIDR")"
+server_name           = "$(hcl_escape "$NOME")"
+ssh_public_key        = "$(hcl_escape "$SSH_PUBLIC_KEY")"
 EOF
   ok "terraform.tfvars gerado em ${dir}"
   run_terraform oci

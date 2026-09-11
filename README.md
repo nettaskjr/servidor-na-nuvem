@@ -90,6 +90,10 @@ O script fará perguntas específicas para a cloud escolhida. Exemplo para AWS:
 ? AWS Secret Access Key:                (digitado sem aparecer)
 ? Região [us-east-1]:
 ? Tipo de instância [t3.micro]:
+? Tamanho do disco inicial em GB [50]:
+? Habilitar abertura de portas customizadas no Security Group (S/n) [S]:
+? Portas a abrir (separadas por vírgula) [22,80]:
+? CIDR de origem permitido para as portas [0.0.0.0/0]:
 ? ID da AMI (vazio = Ubuntu 22.04 LTS) []:
 ? Nome do servidor [servidor-basico]:
 ? Caminho da chave pública SSH [/home/usuario/.ssh/id_rsa.pub]:
@@ -97,6 +101,7 @@ O script fará perguntas específicas para a cloud escolhida. Exemplo para AWS:
 
 - Valores entre colchetes são **padrões** (pressione Enter para aceitar).
 - Senhas e tokens não aparecem ao digitar (modo seguro).
+- **Disco e portas:** cada cloud pergunta o **tamanho do disco inicial** e as **portas a abrir** (veja a seção [Configuração de disco e portas](#configuração-de-disco-e-portas)).
 
 ### 6. Confirme a aplicação
 
@@ -116,7 +121,7 @@ Ao final, o Terraform exibe o IP público e um comando pronto, por exemplo:
 ```
 public_ip = "54.123.45.67"
 ssh_command = "ssh -i ~/.ssh/id_rsa ubuntu@54.123.45.67"
-cloud_init_log_command = "tail -f /var/log/cloud-init-output.log"
+cloud_init_log_command = "sudo tail -f /var/log/cloud-init-output.log"
 ```
 
 Basta copiar e executar o comando SSH.
@@ -150,6 +155,47 @@ servidor-na-nuvem/
     └── proxmox/
         ├── main.tf
         └── variables.tf
+```
+
+---
+
+## Configuração de disco e portas
+
+Cada cloud (exceto Proxmox) pergunta o **tamanho do disco inicial** e quais **portas TCP** devem ser liberadas no firewall/security group. As respostas vão para o `terraform.tfvars` e podem ser ajustadas manualmente depois.
+
+### Tamanho do disco
+
+| Cloud | Variável no `terraform.tfvars` | Padrão |
+|-------|-------------------------------|--------|
+| AWS | `aws_disk_size` | `50` (GB) |
+| GCP | `gcp_disk_size` | `50` (GB) |
+| Azure | `azure_disk_size` | `50` (GB) |
+| OCI | `oci_disk_size` | `50` (GB) |
+
+> No **Proxmox** o disco vem do template clonado e não é parametrizado.
+
+### Portas abertas
+
+No script, informe as portas **separadas por vírgula** (ex.: `22,80,443`); o script converte para a lista do Terraform (`[22, 80, 443]`).
+
+| Cloud | Habilitar | Lista de portas | CIDR de origem | Padrão de portas |
+|-------|-----------|-----------------|----------------|------------------|
+| AWS | `aws_open_port_enable` | `aws_open_port_numbers` | `aws_open_port_cidr` | `[22, 80]` |
+| GCP | `gcp_open_port_enable` | `gcp_open_port_numbers` | `gcp_open_port_cidr` | `[22, 80]` |
+| Azure | `azure_open_port_enable` | `azure_open_port_numbers` | `azure_open_port_cidr` | `[22, 80]` |
+| OCI | `oci_open_port_enable` | `oci_open_port_numbers` | `oci_open_port_cidr` | `[22]` |
+
+- `*_open_port_enable = false` remove **todas** as regras de entrada (cuidado: pode bloquear o SSH).
+- `*_open_port_cidr` restringe a origem (ex.: `203.0.113.10/32` para liberar só o seu IP). O padrão `0.0.0.0/0` libera para qualquer origem.
+- No **Proxmox** o firewall é gerenciado no host, por isso não há variáveis de portas.
+
+Exemplo de trecho do `terraform.tfvars` (AWS):
+
+```hcl
+aws_disk_size         = 50
+aws_open_port_enable  = true
+aws_open_port_numbers = [22, 80, 443]
+aws_open_port_cidr    = "0.0.0.0/0"
 ```
 
 ---
@@ -254,6 +300,10 @@ $ ./create-server.sh
 ? AWS Secret Access Key: ********           (oculto)
 ? Região [us-east-1]: sa-east-1
 ? Tipo de instância [t3.micro]:
+? Tamanho do disco inicial em GB [50]: 100
+? Habilitar abertura de portas customizadas no Security Group (S/n) [S]:
+? Portas a abrir (separadas por vírgula) [22,80]: 22,80,443
+? CIDR de origem permitido para as portas [0.0.0.0/0]:
 ? ID da AMI (vazio = Ubuntu 22.04 LTS) []:
 ? Nome do servidor [servidor-basico]: meu-servidor
 ? Caminho da chave pública SSH [/home/usuario/.ssh/id_rsa.pub]:
@@ -267,6 +317,7 @@ Apply complete!
 
 public_ip = "18.230.100.42"
 ssh_command = "ssh -i ~/.ssh/id_rsa ubuntu@18.230.100.42"
+cloud_init_log_command = "sudo tail -f /var/log/cloud-init-output.log"
 ```
 
 ---

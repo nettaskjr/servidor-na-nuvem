@@ -40,20 +40,16 @@ resource "aws_key_pair" "acesso" {
 
 resource "aws_security_group" "servidor" {
   name        = "${var.server_name}-sg"
-  description = "Acesso SSH (22) e HTTP (80)"
+  description = "Acesso às portas configuradas"
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "ingress" {
+    for_each = var.aws_open_port_enable ? var.aws_open_port_numbers : []
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = [var.aws_open_port_cidr]
+    }
   }
 
   egress {

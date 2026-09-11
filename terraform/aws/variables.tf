@@ -34,6 +34,24 @@ variable "aws_disk_size" {
   default     = 50
 }
 
+variable "aws_open_port_enable" {
+  description = "Habilita a abertura das portas customizadas no Security Group"
+  type        = bool
+  default     = true
+}
+
+variable "aws_open_port_numbers" {
+  description = "Portas TCP a liberar quando `aws_open_port_enable` for true"
+  type        = list(number)
+  default     = [22, 80]
+}
+
+variable "aws_open_port_cidr" {
+  description = "CIDR de origem permitido para as portas liberadas"
+  type        = string
+  default     = "0.0.0.0/0"
+}
+
 variable "server_name" {
   description = "Nome do servidor"
   type        = string

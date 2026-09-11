@@ -59,9 +59,9 @@ resource "oci_core_internet_gateway" "igw" {
 
 # Security List opcional para abrir uma porta arbitrária no subnet.
 # Para habilitar, defina em `terraform/oci/terraform.tfvars`:
-#   oci_open_port_enable = true
-#   oci_open_port_number = 2222          # número da porta desejada
-#   oci_open_port_cidr   = "1.2.3.4/32" # (opcional) CIDR de origem permitido
+#   oci_open_port_enable  = true
+#   oci_open_port_numbers = [2222]        # lista de portas desejadas
+#   oci_open_port_cidr    = "1.2.3.4/32" # (opcional) CIDR de origem permitido
 resource "oci_core_security_list" "open_port" {
   count          = var.oci_open_port_enable ? 1 : 0
   compartment_id = var.oci_compartment_ocid

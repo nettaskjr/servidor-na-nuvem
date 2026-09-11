@@ -29,28 +29,17 @@ resource "google_compute_network" "rede" {
   auto_create_subnetworks = true
 }
 
-resource "google_compute_firewall" "ssh" {
-  name    = "${var.server_name}-allow-ssh"
+resource "google_compute_firewall" "open_ports" {
+  count   = var.gcp_open_port_enable ? 1 : 0
+  name    = "${var.server_name}-allow-ports"
   network = google_compute_network.rede.name
 
   allow {
     protocol = "tcp"
-    ports    = ["22"]
+    ports    = [for p in var.gcp_open_port_numbers : tostring(p)]
   }
 
-  source_ranges = ["0.0.0.0/0"]
-}
-
-resource "google_compute_firewall" "http" {
-  name    = "${var.server_name}-allow-http"
-  network = google_compute_network.rede.name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["80"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = [var.gcp_open_port_cidr]
 }
 
 data "google_compute_image" "ubuntu" {
