@@ -16,7 +16,7 @@ warn()  { printf "${COR_AMARELA}%s${COR_RESET}\n" "$*"; }
 erro()  { printf "${COR_VERMELHA}%s${COR_RESET}\n" "$*" >&2; }
 
 # Pede uma informação e guarda na variável informada ($2).
-# ask "Pergunta" NOME_VARIAVEL [valor_padrao]
+# ask "Pergunta" NOME_VARIÁVEL [valor_padrão]
 ask() {
   local pergunta="$1" var="$2" padrao="${3:-}"
   local extra=""
@@ -42,6 +42,30 @@ ask_secret() {
   printf -v "$var" '%s' "$resp"
 }
 
+# Pede um caminho de arquivo e valida imediatamente após a resposta.
+# Repete a pergunta até 3 vezes; se o arquivo não existir nas três,
+# encerra informando que o .tfvars não foi criado por causa desse erro.
+# ask_path "Pergunta" NOME_VARIAVEL [valor_padrao]
+ask_path() {
+  local pergunta="$1" var="$2" padrao="${3:-}"
+  local tentativa=0
+  while (( tentativa < 3 )); do
+    tentativa=$((tentativa + 1))
+    ask "$pergunta" "$var" "$padrao"
+    local caminho="${!var}"
+    if [[ -f "$caminho" ]]; then
+      return 0
+    fi
+    erro "Caminho inválido (arquivo não encontrado): $caminho"
+    if (( tentativa < 3 )); then
+      warn "Tentativa ${tentativa}/3. Informe novamente."
+    fi
+  done
+  erro "Limite de 3 tentativas atingido para: ${pergunta}"
+  erro "O arquivo .tfvars não foi criado devido ao erro nesta informação."
+  exit 1
+}
+
 # Escapa valores para uso dentro de strings HCL.
 hcl_escape() {
   local s="$1"
@@ -51,16 +75,10 @@ hcl_escape() {
 }
 
 # Pede o caminho da chave pública SSH (comum a todas as clouds).
-# Repete a pergunta até que um arquivo válido seja informado.
+# Valida imediatamente, com até 3 tentativas.
 ask_ssh_key() {
   local chave
-  while true; do
-    ask "Caminho da chave pública SSH" chave "${HOME}/.ssh/id_rsa.pub"
-    if [[ -f "$chave" ]]; then
-      break
-    fi
-    erro "Chave pública não encontrada: $chave"
-  done
+  ask_path "Caminho da chave pública SSH" chave "${HOME}/.ssh/id_rsa.pub"
   SSH_PUBLIC_KEY="$(<"$chave")"
 }
 
@@ -179,7 +197,7 @@ setup_gcp() {
   dir="$(prepare_dir gcp)"
 
   ask "ID do Projeto (project_id)" PROJETO
-  ask "Caminho do arquivo de credenciais (service account .json)" CRED "${HOME}/.config/gcloud/application_default_credentials.json"
+  ask_path "Caminho do arquivo de credenciais (service account .json)" CRED "${HOME}/.config/gcloud/application_default_credentials.json"
   ask "Região" REGIAO "us-central1"
   ask "Zona" ZONA "us-central1-a"
   ask "Tipo de máquina" TIPO "e2-micro"
@@ -189,11 +207,6 @@ setup_gcp() {
   ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "Nome do servidor" NOME "servidor-basico"
   ask_ssh_key
-
-  if [[ ! -f "$CRED" ]]; then
-    erro "Arquivo de credenciais não encontrado: $CRED"
-    return 1
-  fi
 
   ABRIR_PORTAS_BOOL=false
   if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
@@ -282,7 +295,7 @@ setup_oci() {
   ask "Tenancy OCID" TENANCY
   ask "User OCID" USER_OCID
   ask "Fingerprint" FINGERPRINT
-  ask "Caminho da chave privada (PEM)" PRIVKEY "${HOME}/.oci/oci_api_key.pem"
+  ask_path "Caminho da chave privada (PEM)" PRIVKEY "${HOME}/.oci/oci_api_key.pem"
   ask "Região" REGIAO "sa-saopaulo-1"
   ask "Compartment OCID" COMPARTMENT
   ask "Shape da instância" SHAPE "VM.Standard.A1.Flex"
@@ -294,11 +307,6 @@ setup_oci() {
   ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "Nome do servidor" NOME "servidor"
   ask_ssh_key
-
-  if [[ ! -f "$PRIVKEY" ]]; then
-    erro "Chave privada não encontrada: $PRIVKEY"
-    return 1
-  fi
 
   ABRIR_PORTAS_BOOL=false
   if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
