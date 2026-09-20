@@ -1,0 +1,207 @@
+# Docker Compose com Resource Limits para Coolify
+# Substitui /data/coolify/docker-compose.yml
+# Faça backup antes: cp /data/coolify/docker-compose.yml /data/coolify/docker-compose.yml.backup
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # Coolify App
+  # ============================================================
+  coolify:
+    image: coolify/coolify:latest
+    container_name: coolify
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - APP_URL=https://coolify.nettask.com.br  # AJUSTE PARA SEU DOMÍNIO
+      - DB_HOST=localhost
+      - DB_PORT=5432
+      - DB_DATABASE=coolify
+      - DB_USERNAME=coolify
+      - DB_PASSWORD=CHANGE_ME  # USE VARIÁVEL DE AMBIENTE OU SECRETS
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=CHANGE_ME  # USE VARIÁVEL DE AMBIENTE OU SECRETS
+      - SECRET_KEY=CHANGE_ME_GERAR_CHAVE_32_CHARS  # openssl rand -hex 32
+      - APP_ID=coolify
+      - APP_DEBUG=false
+      - APP_ENV=production
+      - LOG_CHANNEL=stack
+      - LOG_LEVEL=info
+    volumes:
+      - /data/coolify:/data/coolify
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/ssh:/etc/ssh:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================
+  # Traefik Reverse Proxy
+  # ============================================================
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=host"
+      - "--certificatesresolvers.letsencrypt.acme.email=seu@email.com"  # AJUSTE
+      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /data/coolify/traefik:/data
+      - /data/coolify/acme.json:/data/acme.json
+    environment:
+      - CF_DNS_API_TOKEN=SEU_CLOUDFLARE_API_TOKEN  # USE SECRETS
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # PostgreSQL Database
+  # ============================================================
+  coolify-db:
+    image: postgres:16-alpine
+    container_name: coolify-db
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - POSTGRES_DB=coolify
+      - POSTGRES_USER=coolify
+      - POSTGRES_PASSWORD=CHANGE_ME  # USE VARIÁVEL DE AMBIENTE OU SECRETS
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - /data/coolify/db:/var/lib/postgresql/data
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=768MB"
+      - "-c"
+      - "work_mem=4MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coolify -d coolify"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Redis
+  # ============================================================
+  coolify-redis:
+    image: redis:7-alpine
+    container_name: coolify-redis
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - "redis-server"
+      - "--requirepass"
+      - "CHANGE_ME"  # USE VARIÁVEL DE AMBIENTE OU SECRETS
+      - "--maxmemory"
+      - "256mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+      - "--appendonly"
+      - "yes"
+    volumes:
+      - /data/coolify/redis:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Cloudflared Tunnel (opcional - se rodar no mesmo host)
+  # ============================================================
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: cloudflared
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   command: tunnel run --token SEU_TUNNEL_TOKEN
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: 128M
+  #       reservations:
+  #         cpus: '0.1'
+  #         memory: 32M
+
+networks:
+  default:
+    name: coolify-network
+    external: false
+
+# ============================================================
+# INSTRUÇÕES DE USO
+# ============================================================
+# 1. Copie este arquivo para /data/coolify/docker-compose.yml
+# 2. Substitua TODOS os "CHANGE_ME" e "SEU_*" por valores reais
+#    - Use: openssl rand -hex 32  (para SECRET_KEY)
+#    - Use: openssl rand -base64 32  (para senhas DB/Redis)
+# 3. Configure variáveis de ambiente sensíveis via:
+#    - .env file (não versionar)
+#    - Docker secrets (swarm)
+#    - HashiCorp Vault / 1Password CLI / etc.
+# 4. Aplique: docker compose -f /data/coolify/docker-compose.yml up -d
+# 5. Verifique: docker compose -f /data/coolify/docker-compose.yml ps
+#    docker stats (para ver uso real vs limits)
