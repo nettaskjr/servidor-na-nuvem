@@ -3,6 +3,7 @@ locals {
     os_user        = var.os_user
     ssh_public_key = var.ssh_public_key
     cloud_name     = var.cloud_name
+    user_password  = var.user_password
   })
 }
 

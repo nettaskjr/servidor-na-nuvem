@@ -65,6 +65,13 @@ variable "ssh_public_key" {
   type        = string
 }
 
+variable "user_password" {
+  description = "Senha do usuário padrão (para Cockpit/Console)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # Opção para abrir portas arbitrárias na Security List do subnet
 # Habilite definindo `oci_open_port_enable = true` em terraform.tfvars
 variable "oci_open_port_enable" {

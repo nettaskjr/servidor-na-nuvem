@@ -23,6 +23,7 @@ module "cloud_init" {
   ssh_public_key = var.ssh_public_key
   os_user        = "ubuntu"
   cloud_name     = "OCI"
+  user_password  = var.user_password
 }
 
 data "oci_identity_availability_domains" "ads" {
@@ -152,4 +153,9 @@ output "ssh_command" {
 output "cloud_init_log_command" {
   description = "Comando para acompanhar a saída do cloud-init em tempo real"
   value       = "sudo tail -f /var/log/cloud-init-output.log"
+}
+
+output "cloud_init_log_command_direct" {
+  description = "Comando para acompanhar a saída do cloud-init em tempo real sem acessar o servidor"
+  value       = "ssh ubuntu@${oci_core_instance.servidor.public_ip} 'sudo tail -f /var/log/cloud-init-output.log'"
 }

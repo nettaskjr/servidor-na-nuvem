@@ -14,3 +14,9 @@ variable "cloud_name" {
   type        = string
   default     = ""
 }
+
+variable "user_password" {
+  description = "Senha do usuário padrão do sistema"
+  type        = string
+  default     = ""
+}

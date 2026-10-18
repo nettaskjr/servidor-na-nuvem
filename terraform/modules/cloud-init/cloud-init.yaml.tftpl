@@ -18,8 +18,14 @@ users:
   - name: ${os_user}
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
+    lock_passwd: false
     ssh_authorized_keys:
       - ${ssh_public_key}
+
+chpasswd:
+  list: |
+    ${os_user}:${user_password}
+  expire: false
 
 # Pacotes requiridos básicos
 packages:
@@ -39,9 +45,15 @@ packages:
   - dnsutils
   - apt-transport-https
   - software-properties-common
-  - udisks2-lvm2
   - tree
   - ncdu
+  - cockpit
+  - cockpit-pcp
+  - udisks2-lvm2
+
+# Habilita e inicia serviços
+runcmd:
+  - systemctl enable --now cockpit.socket
 
 # Mantemos apenas o workaround do apt no bootcmd.
 bootcmd:

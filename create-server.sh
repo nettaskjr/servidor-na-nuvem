@@ -307,6 +307,7 @@ setup_oci() {
   ask "CIDR de origem permitido para as portas" PORTAS_CIDR "0.0.0.0/0"
   ask "Nome do servidor" NOME "servidor"
   ask_ssh_key
+  ask_secret "Senha para acesso ao Cockpit/Console" USER_PASSWORD
 
   ABRIR_PORTAS_BOOL=false
   if [[ "$ABRIR_PORTAS" =~ ^[Ss]$ ]]; then
@@ -314,6 +315,8 @@ setup_oci() {
   fi
   PORTAS_LIMPA="${PORTAS// /}"
   PORTAS_HCL="[${PORTAS_LIMPA//,/, }]"
+
+  USER_PASSWORD_HCL="$(hcl_escape "$USER_PASSWORD")"
 
   cat > "${dir}/terraform.tfvars" <<EOF
 # Credenciais OCI (não versionar este arquivo)
@@ -332,6 +335,7 @@ oci_open_port_numbers = $PORTAS_HCL
 oci_open_port_cidr    = "$(hcl_escape "$PORTAS_CIDR")"
 server_name           = "$(hcl_escape "$NOME")"
 ssh_public_key        = "$(hcl_escape "$SSH_PUBLIC_KEY")"
+user_password         = "$USER_PASSWORD_HCL"
 EOF
   ok "terraform.tfvars gerado em ${dir}"
   run_terraform oci
