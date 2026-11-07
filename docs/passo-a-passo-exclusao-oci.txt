@@ -1,0 +1,10 @@
+Opção A — Pela console (mais simples)
+Entre na região correta (o default do projeto é us-ashburn-1) e no compartment usado no terraform.tfvars.
+1. Compute → Instances → localize servidor-basico
+2. Menu ⋮ → Terminate
+- Marque “Permanently delete the attached boot volume” (senão o disco continua existindo e gerando custo)
+- Confirme em Terminate
+3. Aguarde o estado virar Terminated
+4. Networking → Virtual Cloud Networks → servidor-basico-vcn → Delete
+- Se reclamar que existem subnets, apague primeiro a subnet servidor-basico-subnet e a security list servidor-basico-open-port, depois apague o Internet Gateway servidor-basico-igw, e por fim a VCN.
+5. Block Storage → Boot Volumes: confirme que não sobrou nenhum volume com o nome do servidor.
